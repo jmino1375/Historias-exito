@@ -1,0 +1,1281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Constructor de Historias de Éxito · Grupo Macro</title>
+<meta name="description" content="Arma historias de éxito de Grupo Macro con la estructura Personaje · Objetivo · Obstáculo · Transformación, a partir de casos reales." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+
+<style>
+  html { color-scheme: light dark; }
+  img { max-width: 100%; height: auto; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --paper: #F6F3EC;
+    --surface: #FFFFFF;
+    --surface-sunk: #EFEBE0;
+    --ink: #1C2536;
+    --ink-soft: #3B4557;
+    --muted: #6E6A62;
+    --hairline: #DDD6C8;
+    --accent: #12776A;
+    --accent-ink: #0C5349;
+    --accent-wash: #E7F0EC;
+    --warm: #B5651F;
+    --warm-ink: #8A4A14;
+    --warm-wash: #F5EBDD;
+    --focus: #12776A;
+    --shadow: 0 1px 2px rgba(28, 37, 54, .06), 0 8px 24px rgba(28, 37, 54, .07);
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141A26;
+      --surface: #1C2432;
+      --surface-sunk: #171E2B;
+      --ink: #E9E5DC;
+      --ink-soft: #C2BEB4;
+      --muted: #928D82;
+      --hairline: #313A4A;
+      --accent: #4DAE9C;
+      --accent-ink: #7CC8B9;
+      --accent-wash: #17332E;
+      --warm: #DB9A5F;
+      --warm-ink: #E9B487;
+      --warm-wash: #33261A;
+      --focus: #4DAE9C;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .32);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #141A26;
+    --surface: #1C2432;
+    --surface-sunk: #171E2B;
+    --ink: #E9E5DC;
+    --ink-soft: #C2BEB4;
+    --muted: #928D82;
+    --hairline: #313A4A;
+    --accent: #4DAE9C;
+    --accent-ink: #7CC8B9;
+    --accent-wash: #17332E;
+    --warm: #DB9A5F;
+    --warm-ink: #E9B487;
+    --warm-wash: #33261A;
+    --focus: #4DAE9C;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .32);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+
+  /* ---------- header ---------- */
+  header.masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 18px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .masthead h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(1.9rem, 1.2rem + 2.4vw, 3rem);
+    line-height: 1.04;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    margin: 0;
+    flex: 1 1 320px;
+  }
+  .masthead .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .lede {
+    margin: 16px 0 0;
+    max-width: 60ch;
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+  }
+  .theme-toggle {
+    appearance: none;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 7px 11px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--muted); }
+
+  /* ---------- layout ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    margin-top: 32px;
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 40px; align-items: start; }
+  }
+
+  /* ---------- brief form ---------- */
+  .brief {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 22px 20px;
+    box-shadow: var(--shadow);
+  }
+  @media (min-width: 900px) {
+    .brief { position: sticky; top: 24px; }
+  }
+  .brief h2, .stage h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 18px;
+    font-weight: 500;
+  }
+  .field { margin-bottom: 18px; }
+  .field:last-of-type { margin-bottom: 22px; }
+  .field label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-bottom: 6px;
+  }
+  .field .hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0 0 8px;
+    line-height: 1.45;
+  }
+  .field input[type="text"],
+  .field textarea {
+    width: 100%;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 9px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  .field textarea { min-height: 74px; line-height: 1.5; }
+  .field input:focus-visible,
+  .field textarea:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+    border-color: var(--focus);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .chips button {
+    appearance: none;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    padding: 4px 9px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .chips button:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn {
+    appearance: none;
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.92rem;
+    border-radius: 9px;
+    padding: 11px 18px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform .04s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-ink); }
+  .btn-primary:disabled { opacity: .55; cursor: progress; }
+  .btn-ghost { background: transparent; border-color: var(--hairline); color: var(--ink-soft); }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--ink); }
+  .btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- stage ---------- */
+  .stage { min-height: 200px; }
+
+  .framework-note {
+    font-size: 0.86rem;
+    color: var(--muted);
+    margin: -6px 0 20px;
+  }
+
+  .movements { display: flex; flex-direction: column; gap: 2px; }
+  .movement {
+    padding: 20px 22px 22px;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+  .movement:first-child { border-radius: 14px 14px 0 0; }
+  .movement:last-child { border-radius: 0 0 14px 14px; }
+  .movement + .movement { border-top: none; }
+  .movement .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .movement .eyebrow b {
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+  .movement h3 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500;
+    font-size: 1.36rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  .movement p {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+  }
+  .movement.is-obstacle { background: var(--warm-wash); border-color: color-mix(in srgb, var(--warm) 35%, var(--hairline)); }
+  .movement.is-obstacle .eyebrow b { color: var(--warm-ink); }
+  .movement.is-transform { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 32%, var(--hairline)); }
+  .movement .payoff {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 1.16rem;
+    font-style: italic;
+    color: var(--ink);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    max-width: 62ch;
+  }
+  .placeholder-slot p { color: var(--muted); }
+  .placeholder-slot h3 { color: var(--ink-soft); }
+
+  .source-card {
+    margin-top: 16px;
+    border: 1px dashed var(--muted);
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: var(--surface-sunk);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  .source-card .row { display: flex; gap: 10px; }
+  .source-card .row span:first-child {
+    color: var(--muted);
+    min-width: 92px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+  }
+  .source-card .verify {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hairline);
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.84rem;
+    color: var(--muted);
+  }
+
+  .stage-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+  .banner {
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    margin-bottom: 18px;
+    border: 1px solid;
+  }
+  .banner.warn { background: var(--warm-wash); border-color: color-mix(in srgb, var(--warm) 40%, transparent); color: var(--warm-ink); }
+  .banner.info { background: var(--accent-wash); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent-ink); }
+  .banner.err  { background: var(--warm-wash); border-color: var(--warm); color: var(--warm-ink); }
+
+  .thinking {
+    display: flex; align-items: center; gap: 12px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+    padding: 24px 0;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+
+  .others { margin-top: 16px; }
+  .others summary {
+    cursor: pointer;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .others summary:hover { color: var(--ink); }
+  .others ul {
+    margin: 12px 0 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+  .others .o-sub { color: var(--muted); }
+
+  footer.foot {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--hairline);
+    font-size: 0.8rem;
+    color: var(--muted);
+    max-width: 66ch;
+  }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-size: 0.85rem; padding: 10px 16px; border-radius: 999px;
+    box-shadow: var(--shadow); opacity: 0; pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Constructor de Historias de Éxito</h1>
+    <button class="theme-toggle" id="themeToggle" type="button">tema</button>
+    <span class="kicker">Grupo&nbsp;Macro</span>
+  </header>
+  <p class="lede">
+    Describe a tu cliente potencial y su situación. La herramienta busca un caso real
+    de Grupo Macro en la misma industria y arma una historia con cuatro movimientos:
+    <b>Personaje · Objetivo · Obstáculo · Transformación</b>.
+  </p>
+
+  <div class="grid">
+    <!-- ---------- BRIEF ---------- -->
+    <section class="brief" aria-labelledby="briefTitle">
+      <h2 id="briefTitle">El brief</h2>
+
+      <div class="field">
+        <label for="industria">Tipo de empresa / industria</label>
+        <p class="hint">¿En qué negocio está tu cliente? Sé específico.</p>
+        <input type="text" id="industria" autocomplete="off" placeholder="p. ej. aseguradora de personas" />
+        <div class="chips" data-target="industria">
+          <button type="button">aseguradora</button>
+          <button type="button">banco</button>
+          <button type="button">cooperativa de ahorro</button>
+          <button type="button">concesionario automotriz</button>
+          <button type="button">retail / tiendas</button>
+          <button type="button">telecomunicaciones</button>
+          <button type="button">clínica / salud</button>
+          <button type="button">consumo masivo</button>
+          <button type="button">contact center</button>
+          <button type="button">embotelladora</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="cargo">Cargo de la persona</label>
+        <p class="hint">¿Con quién vas a conversar? Su rol define al personaje.</p>
+        <input type="text" id="cargo" autocomplete="off" placeholder="p. ej. gerente comercial" />
+        <div class="chips" data-target="cargo">
+          <button type="button">gerente comercial</button>
+          <button type="button">gerente general</button>
+          <button type="button">jefe de agencia</button>
+          <button type="button">supervisor de ventas</button>
+          <button type="button">gerente de tienda</button>
+          <button type="button">gerente de RR.HH.</button>
+          <button type="button">gerente de servicio</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="objetivo">Objetivo de la historia</label>
+        <p class="hint">Nombra la solución o rutina que quieres demostrar (sistemática comercial, promesa de servicio, líder como coach…) y en qué quieres ganar credibilidad.</p>
+        <textarea id="objetivo" placeholder="p. ej. demostrar que la sistemática comercial con Feedback sí cambia el comportamiento de los vendedores"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="situacion">Situación que quiere mostrar</label>
+        <p class="hint">El problema actual del cliente, el que la historia va a reflejar.</p>
+        <textarea id="situacion" placeholder="p. ej. sus supervisores persiguen a la fuerza con números y reportes, pero no salen a campo a acompañar"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="indicador">Indicador que quieres mover</label>
+        <p class="hint">El número que la historia debe mostrar moviéndose. Casi todos los casos documentados giran alrededor de uno.</p>
+        <input type="text" id="indicador" autocomplete="off" placeholder="p. ej. % de vendedores que llegan a la meta" />
+        <div class="chips" data-target="indicador">
+          <button type="button">% de vendedores en meta</button>
+          <button type="button">índice de recomendación</button>
+          <button type="button">cumplimiento de protocolos</button>
+          <button type="button">ISC / satisfacción del cliente</button>
+          <button type="button">adherencia a las rutinas</button>
+          <button type="button">Feedback cumplido</button>
+          <button type="button">ticket promedio</button>
+          <button type="button">clima laboral</button>
+          <button type="button">tiempos de atención</button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="buildBtn" type="button">Construir historia</button>
+        <button class="btn btn-ghost" id="clearBtn" type="button">Limpiar</button>
+      </div>
+    </section>
+
+    <!-- ---------- STAGE ---------- -->
+    <section class="stage" aria-labelledby="stageTitle" aria-live="polite">
+      <h2 id="stageTitle">La historia</h2>
+      <div id="stageBody"></div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    Las historias se construyen a partir de casos reales documentados por Grupo Macro
+    (reportes anuales y bancos de historias de Servicio, Disciplina Comercial y Accountability).
+    Los nombres de personas son personajes representativos del rol, no personas identificables.
+    Verifica cifras y nombres de cliente contra la fuente citada antes de usar la historia con un cliente.
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ============================================================
+   BASE DE CASOS REALES  (Grupo Macro)
+   ============================================================ */
+const CASES = [
+  // ---- Seguros ----
+  { cliente:"La Boliviana Ciacruz", industria:"Aseguradora", pais:"Bolivia", frente:"Disciplina comercial",
+    programa:"Programa incubadora de agentes", tools:["Reclutamiento","Sistemática comercial","Plan de carrera"],
+    obstaculo:"No tenían un sistema estructurado para reclutar, formar e incorporar agentes independientes de forma sostenible.",
+    transformacion:"Diseñaron protocolos de reclutamiento, selección, onboarding y desarrollo, más una sistemática comercial y un plan de incentivos y carrera.",
+    cifra:"Más de 100 agentes independientes formados e incorporados a la compañía." },
+  { cliente:"Chubb Ecuador", industria:"Aseguradora", pais:"Ecuador", frente:"Servicio",
+    programa:"Cultura telefónica CHUBB", tools:["Protocolos de atención telefónica","Talleres presenciales"],
+    obstaculo:"La atención telefónica era despareja entre ciudades y muchas llamadas no se resolvían bien a la primera.",
+    transformacion:"Rediseñaron los protocolos de llamada (consulta, transferencia, resolución) y entrenaron a los equipos de Quito, Guayaquil y Cuenca en la nueva cultura telefónica.",
+    cifra:null },
+  { cliente:"Consorcio de Pichincha", industria:"Aseguradora / financiera", pais:"Ecuador", frente:"Liderazgo",
+    programa:"El líder como coach", tools:["Coaching interno","Calibración de habilidades"],
+    obstaculo:"Los líderes empujaban resultados pero no desarrollaban a su gente; el acompañamiento era esporádico.",
+    transformacion:"Entrenaron a los líderes como coaches internos, con herramientas para mejorar las habilidades comerciales de su equipo de forma constante.",
+    cifra:null },
+  { cliente:"Krediseguros", industria:"Corredor de seguros", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Brown Paper de procesos", tools:["Brown Paper","Mapeo de procesos"],
+    obstaculo:"Cuellos de botella en procesos con responsabilidades compartidas y mucho trabajo manual con los agentes.",
+    transformacion:"Mapearon todos los procesos internos, priorizaron los críticos y definieron qué tareas cotidianas automatizar para ganar eficiencia.",
+    cifra:null },
+  { cliente:"Nova Seguros", industria:"Corredor de seguros", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Camino estratégico a 5 años", tools:["Modelo de 4 ventanas","Visión quinquenal"],
+    obstaculo:"No tenían una ruta clara para escalar su posición dentro del grupo empresarial.",
+    transformacion:"Construyeron un plan a cinco años sobre cuatro ventanas (financiera, futuro, negocios, clientes) con la meta de entrar al top 5 de corredores del país.",
+    cifra:null },
+  { cliente:"Aseguradora regional (cultura N=1)", industria:"Aseguradora", pais:"Colombia · Costa Rica · Guatemala · Rep. Dominicana", frente:"Accountability",
+    programa:"Estrategia y cultura de ejecución", tools:["TAM","Enfoque quinquenal","Comité de estrategia","Spirit week"],
+    obstaculo:"Querían crecer en nuevas líneas de negocio y nuevos países sin una cultura de ejecución común que sostuviera el crecimiento.",
+    transformacion:"Instalaron una cultura de estrategia y ejecución con transformaciones sucesivas del negocio, separando lo estratégico de lo operacional y anclando el ritmo en un comité de estrategia y el spirit week.",
+    cifra:"Transformaciones sucesivas de USD 20MM (ventas individuales y agencias master), 80MM (gastos médicos mayores), 40MM (cultura de procesos) y 200MM (cultura N=1 en 4 países)." },
+
+  // ---- Banca / cooperativas ----
+  { cliente:"BGR", industria:"Banco", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Ecosistema de evaluación · Sistemática Comercial", tools:["Mystery Shopper","Tableros de clasificación"],
+    obstaculo:"No había forma de medir si las agencias cumplían las rutinas y protocolos comerciales; los puntos de dolor quedaban invisibles.",
+    transformacion:"Montaron un ecosistema de evaluación en tres niveles (jefes de agencia, asesores y agencias) más un programa de Mystery Shopper con casos cotidianos, y con esa data tomaron decisiones concretas sobre cada punto de dolor.",
+    cifra:null },
+  { cliente:"Banco Nacional de Bolivia (BNB)", industria:"Banco", pais:"Bolivia", frente:"Disciplina comercial",
+    programa:"Sistemática Comercial · Banca Masiva", tools:["Feedback","Flow Learning","Tablero comercial"],
+    obstaculo:"El modelo comercial no bajaba a rutinas consistentes en las sucursales.",
+    transformacion:"Implementaron cuatro rutinas (tablero comercial, entrenamiento permanente, acompañamiento y retroalimentación) trabajando con los líderes de sucursal hasta cumplirlas con éxito.",
+    cifra:null },
+  { cliente:"Banco Nacional de Bolivia (BNB)", industria:"Banco", pais:"Bolivia", frente:"Servicio",
+    programa:"Sistemática de Servicio", tools:["Flow Learning","Feedback","Mystery Shopper","Tablero de servicio"],
+    obstaculo:"El índice de satisfacción del cliente estaba estancado en la plataforma de servicio.",
+    transformacion:"Tras una exploración con entrevistas y mystery shopper, diseñaron un tablero y rutinas de mejora continua, acompañamiento y entrenamiento con Flow y Feedback.",
+    cifra:"100% de implementación de las rutinas diseñadas e incremento significativo del índice de satisfacción." },
+  { cliente:"CACPECO", industria:"Cooperativa de ahorro y crédito", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Sistemática Comercial · Rutinas", tools:["Reunión grito","Reunión pito","Gestión de detractores"],
+    obstaculo:"Equipos comerciales desalineados, sin un ritmo de gestión que diera claridad y control.",
+    transformacion:"Consolidaron cuatro rutinas pilares: reunión grito semanal para alinear resultados, reunión pito diaria de objetivos y gestión de detractores para el cliente difícil, desplegadas en 20 agencias.",
+    cifra:"Índice de recomendación de 90,8%." },
+  { cliente:"CACPECO", industria:"Cooperativa de ahorro y crédito", pais:"Ecuador", frente:"Servicio",
+    programa:"Escuela de servicio con Flow Learning", tools:["Flow Learning","Microcápsulas","Certificación de agencias"],
+    obstaculo:"Estándares de servicio dispares entre agencias.",
+    transformacion:"Desplegaron cinco módulos en Flow y siete microcápsulas alineadas a las brechas medidas, evaluando 18 agencias.",
+    cifra:null },
+  { cliente:"Amibank", industria:"Banco", pais:"Ecuador", frente:"Servicio",
+    programa:"Escuela de habilidades comerciales y de servicio", tools:["Escucha activa","Psicogeometrics","Manejo de reclamos"],
+    obstaculo:"El front office no tenía técnica para explorar necesidades ni para cerrar.",
+    transformacion:"Escuela modular de comunicación, empatía, tipología de clientes, manejo de reclamos y cierre efectivo para el equipo de front office.",
+    cifra:null },
+  { cliente:"Banco Solidario", industria:"Banco", pais:"Ecuador", frente:"Liderazgo",
+    programa:"Comunicación para líderes", tools:["Comunicación en cascada","Talleres virtuales"],
+    obstaculo:"La cultura y los mensajes clave no bajaban de forma clara y consistente a todos los equipos.",
+    transformacion:"Formaron a líderes de primera y segunda línea como gestores de comunicación en cascada, en etapas para maximizar la aplicación.",
+    cifra:null },
+  { cliente:"Diners Club Ecuador", industria:"Financiera / tarjetas de crédito", pais:"Ecuador", frente:"Servicio",
+    programa:"Escuela de Habilidades de Servicio (Call Center y Front Office)", tools:["CAPA","Metamensajes","Rapport","Psicogeometría","Cascabeleo","PIMI"],
+    obstaculo:"Reclamos y cobranzas se manejaban sin un método común.",
+    transformacion:"Entrenaron tipología de clientes, metamensajes positivos y CAPA para convertir reclamos en valor; y Cascabeleo y PIMI para negociación en cobranzas.",
+    cifra:null },
+  { cliente:"Mutualista Pichincha", industria:"Financiera / vivienda", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Modelo ADKAR con IA", tools:["ADKAR","Herramientas de IA","Evento Shark Tank"],
+    obstaculo:"La adopción de nuevas herramientas por parte de los ejecutivos era lenta.",
+    transformacion:"Programa que combinó ADKAR (consciencia, deseo, conocimiento, habilidad, refuerzo) con formación en IA, cerrando con un Shark Tank donde los equipos presentaron proyectos que resolvían problemas reales.",
+    cifra:"Más de 400 empleados alcanzados." },
+  { cliente:"Banco Ganadero", industria:"Banco", pais:"Bolivia", frente:"Liderazgo",
+    programa:"Liderazgo Femenino PERLA", tools:["Modelo PERLA","Webinar"],
+    obstaculo:"Mujeres líderes enfrentaban obstáculos para su desarrollo profesional sin un método para superarlos.",
+    transformacion:"Webinar de liderazgo femenino sobre diferencias de funcionamiento cerebral, obstáculos del entorno y el Modelo PERLA para potenciar el liderazgo.",
+    cifra:"250 mujeres líderes participantes." },
+  { cliente:"BANRED", industria:"Red interbancaria / medios de pago", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Implementación de cultura", tools:["Diagnóstico cultural","Herramientas cuali y cuanti"],
+    obstaculo:"La cultura organizacional no estaba alineada con los objetivos estratégicos.",
+    transformacion:"Diagnóstico cultural cuali y cuanti, diseño de la cultura deseada (ágil y centrada en el cliente) y definición de las experiencias para transmitirla.",
+    cifra:null },
+  { cliente:"AMIBANK", industria:"Banco", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Diagnóstico de cultura post-fusión", tools:["Grupos focales","Hipótesis cultural","Taller de líderes"],
+    obstaculo:"Tras fusionar Insotec y Banco Finca convivían dos culturas organizacionales distintas.",
+    transformacion:"Construyeron una hipótesis cultural con grupos focales, la midieron y validaron, y en un taller con líderes definieron la cultura deseada alineada a la estrategia.",
+    cifra:null },
+
+  // ---- Automotriz ----
+  { cliente:"Toyota Ecuador", industria:"Concesionario automotriz", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Programa de Certificación · Academia de Asesores Comerciales", tools:["Flow","Feedback","Cliente Fantasma"],
+    obstaculo:"Cada concesionario vendía a su manera; no había una metodología de ventas única.",
+    transformacion:"Unificaron y certificaron la metodología de ventas 'al estilo Toyota' en toda la red, con cápsulas de microaprendizaje en Flow, acompañamiento con Feedback y medición con Cliente Fantasma.",
+    cifra:null },
+  { cliente:"Maresa", industria:"Automotriz", pais:"Ecuador", frente:"Liderazgo",
+    programa:"Supervisor como Coach", tools:["Medición L270","Escuela de liderazgo","Certificación"],
+    obstaculo:"La percepción de liderazgo en los equipos era baja según la encuesta de clima.",
+    transformacion:"Escuela de liderazgo con módulos de 8 horas, medición de competencias L270, sesiones virtuales y trabajos de certificación.",
+    cifra:"+6% en calificaciones generales, +15% en supervisores comerciales y +26% en feedback sobre los comportamientos trabajados; 89,67% de recomendación." },
+  { cliente:"KIA Ecuador", industria:"Concesionario automotriz", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Charlas de reactivación comercial", tools:["Mindset","Gestión de la energía del equipo"],
+    obstaculo:"El equipo llegaba desmotivado al cierre de cada mes.",
+    transformacion:"Sesiones para instalar un mindset positivo y la energía necesaria para enfrentar el mercado y cumplir las metas mensuales.",
+    cifra:null },
+  { cliente:"ChevyPlan", industria:"Financiamiento automotriz", pais:"Ecuador", frente:"Servicio",
+    programa:"Escuela de servicio · Front Office", tools:["Psicogeometrics","CAPA","Los 6 tipos de no"],
+    obstaculo:"El equipo de front office no tenía técnica para reclamos y objeciones.",
+    transformacion:"Dos etapas: comunicación efectiva con Psicogeometrics y manejo de reclamos con CAPA y la gestión de los seis tipos de 'no'.",
+    cifra:null },
+  { cliente:"Nexumcorp", industria:"Distribución de vehículos", pais:"Ecuador", frente:"Servicio",
+    programa:"Programa de experiencia de servicio", tools:["Promesa de servicio por marca","Cliente fantasma mensual","Seguimiento a rezagadas"],
+    obstaculo:"Al inicio, el cumplimiento de los protocolos de servicio no superaba el 50%.",
+    transformacion:"Definieron una promesa de servicio por marca, la implementaron en todos los asesores y midieron con cliente fantasma mensual, con seguimiento personalizado a las agencias más bajas.",
+    cifra:"El cumplimiento pasó de menos del 50% a un pico del 61% al tercer mes." },
+  { cliente:"Motor 1", industria:"Retail automotriz", pais:"Ecuador", frente:"Servicio",
+    programa:"Promesa de servicio", tools:["Protocolos de asesor","Flow Learning"],
+    obstaculo:"Experiencia de cliente inconsistente y pérdida de estándar por la rotación de asesores.",
+    transformacion:"Tradujeron la promesa a principios y protocolos, entrenaron a los asesores y montaron módulos en Flow para sostener el estándar pese a la rotación.",
+    cifra:"100% de los asesores entrenados en habilidades de ventas." },
+  { cliente:"Continental General Tire", industria:"Manufactura de llantas", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Entrenamiento a red de vendedores", tools:["Abordaje","Enfoque humano-negocio","Manejo de objeciones","Cierre"],
+    obstaculo:"El equipo interno y los distribuidores manejaban estándares comerciales dispares.",
+    transformacion:"Alinearon las mismas competencias comerciales en el equipo interno y en los distribuidores principales para un estándar único frente al cliente.",
+    cifra:null },
+
+  // ---- Retail / consumo ----
+  { cliente:"Cyrano", industria:"Panadería de autor / retail", pais:"Ecuador", frente:"Servicio",
+    programa:"Sistemática 4.0 de servicio", tools:["Feedback","Portal Macro (dashboards)","Flow"],
+    obstaculo:"Se propusieron que 9 de cada 10 clientes recomendaran la experiencia en los locales, y no llegaban.",
+    transformacion:"Usaron Feedback en locales con 'padrinos' que controlan la experiencia, dashboards en el Portal Macro para decidir y formación de líderes en servicio y ticket promedio.",
+    cifra:"92% de clientes promotores, 96% del personal nuevo aprobó la inducción por Flow y 95% de Feedback cumplido en locales." },
+  { cliente:"Kobe", industria:"Retail", pais:"Ecuador", frente:"Servicio",
+    programa:"Promesa de Servicio", tools:["Embajadores de servicio","Medición de comportamientos"],
+    obstaculo:"La atención no tenía identidad ni un estándar que la sostuviera.",
+    transformacion:"Definieron la promesa, la tradujeron a principios y protocolos y formaron embajadores de servicio en cada local para entrenar a sus compañeros.",
+    cifra:null },
+  { cliente:"Fybeca / Sana Sana", industria:"Cadena de farmacias", pais:"Ecuador", frente:"Servicio",
+    programa:"Monitoreo de campo", tools:["Auditoría de layout","Planogramas","Control de POP"],
+    obstaculo:"No había control sistemático del layout, los planogramas, el stock y el material POP en tienda.",
+    transformacion:"Con cerca de 1.000 visitas mensuales miden el desempeño de todas las tiendas y envían un reporte individual por tienda.",
+    cifra:"Cerca de 1.000 visitas mensuales a tiendas." },
+  { cliente:"PRONACA", industria:"Consumo masivo / alimentos", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Escuela comercial (nutrición y almacenes)", tools:["Psicogeometrics","Satisfactor + storytelling","Feedback"],
+    obstaculo:"El equipo comercial tenía brechas de habilidad para sostener relaciones de largo plazo.",
+    transformacion:"Formación en tipología de clientes, preguntas del lado humano al lado del negocio, uso del Satisfactor con storytelling, objeciones y cierre, acompañada con Feedback.",
+    cifra:null },
+  { cliente:"La Fabril", industria:"Consumo masivo (aceites y margarinas)", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Sistemática de competencias", tools:["Juegos de la Chicharra","Formación de facilitadores","Flows de casos cortos"],
+    obstaculo:"Distribuidores, transportistas y facilitadores internos no compartían un método común.",
+    transformacion:"Juegos corporativos para distribuidores y un programa de facilitadores internos que luego entrenaron a la organización, con Flows de casos cortos para reforzar.",
+    cifra:"Cerca de 700 personas entrenadas por los facilitadores internos." },
+  { cliente:"Papa John's Chile", industria:"Restaurantes / QSR", pais:"Chile", frente:"Servicio",
+    programa:"Escuela de Experiencia de Clientes", tools:["Psicogeometría","Metamensajes","LBS","CAPA"],
+    obstaculo:"Gerentes y jefes de tienda sabían el 'qué' del servicio pero no el 'cómo' aplicarlo.",
+    transformacion:"Módulos prácticos de tipología de clientes, metamensajes, Lenguaje-Beneficio-Solución y CAPA para transformar conflictos en valor, enfocados en líderes de tienda.",
+    cifra:null },
+  { cliente:"Adriana Hoyos", industria:"Diseño de interiores / mobiliario premium", pais:"Ecuador · Miami", frente:"Planificación estratégica",
+    programa:"Planes de acción por área", tools:["Planificación estratégica","Planes de acción"],
+    obstaculo:"Las áreas de diseño de interiores y producción no tenían planes de acción propios.",
+    transformacion:"Acompañamiento en Ecuador y Miami para construir planes de acción que fortalecieran diseño y producción dentro de la planificación estratégica.",
+    cifra:null },
+
+  // ---- Telecom / servicios ----
+  { cliente:"Claro Ecuador", industria:"Telecomunicaciones", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Talleres de habilidades comerciales", tools:["Prospección","Manejo de temores","Soluciones al cliente"],
+    obstaculo:"La fuerza comercial cargaba temores del área y su prospección era débil.",
+    transformacion:"Programa para enfrentar esos temores, dar soluciones oportunas y mejorar los criterios de prospección.",
+    cifra:null },
+  { cliente:"Operador de planes de internet", industria:"Telecomunicaciones", pais:"Ecuador", frente:"Disciplina comercial",
+    programa:"Field Coaching", tools:["Acompañamiento en campo","Metodología comercial medible"],
+    obstaculo:"No se sabía qué frenaba el cumplimiento de los objetivos comerciales de los vendedores en campo.",
+    transformacion:"Acompañamiento personalizado en campo para diagnosticar, y diseño de una metodología comercial medible aplicable por vendedores y supervisores.",
+    cifra:null },
+  { cliente:"American Call Center", industria:"Contact center / BPO", pais:"Ecuador", frente:"Servicio",
+    programa:"Sistemática de Servicio", tools:["Nivelación de nuevos ingresos","Rutinas de servicio"],
+    obstaculo:"Los nuevos ingresos no estaban nivelados y la sistemática necesitaba sostenerse.",
+    transformacion:"Ajustaron la sistemática a las nuevas exigencias y capacitaron al equipo para asegurar continuidad del servicio.",
+    cifra:"22 centinelas y 36 supervisores capacitados." },
+  { cliente:"Metro de Lima", industria:"Transporte público", pais:"Perú", frente:"Servicio",
+    programa:"Mystery Shopper", tools:["Auditoría encubierta","Plataforma Survey","Reconocimiento al cumplimiento"],
+    obstaculo:"No había una medición sistemática de la experiencia en estaciones, a bordo y en limpieza.",
+    transformacion:"Cerca de 200 inspecciones mensuales de un auditor que recorre como cliente real y evalúa a todo el personal, premiando a quienes cumplen los protocolos.",
+    cifra:"Cerca de 200 inspecciones de Mystery Shopper al mes." },
+  { cliente:"QUIPORT", industria:"Operación aeroportuaria", pais:"Ecuador", frente:"Servicio",
+    programa:"Mejora de la Experiencia del Pasajero", tools:["Medición de tiempos","Service Design Thinking","Comunidad interna"],
+    obstaculo:"Los tiempos del proceso y los stakeholders no estaban alineados para certificar el nivel más alto.",
+    transformacion:"Midieron tiempos en temporada alta, formaron una comunidad interna con todos los stakeholders y aplicaron service design thinking para los planes de acción.",
+    cifra:"Alcanzaron la certificación nivel 5 de ACI (Airport Council International)." },
+
+  // ---- Salud ----
+  { cliente:"Hospital Vozandes Quito", industria:"Salud / hospital", pais:"Ecuador", frente:"Servicio",
+    programa:"Monitoreo de servicio + medición HCAHPS", tools:["Monitoreo mensual","Estándar HCAHPS"],
+    obstaculo:"No tenían un panorama claro del cumplimiento de los protocolos de atención al paciente.",
+    transformacion:"Monitoreo mensual de todos los canales de atención en unas 14 áreas y medición con el estándar internacional HCAHPS como termómetro de la satisfacción del paciente.",
+    cifra:null },
+  { cliente:"NovaClínica Santa Cecilia", industria:"Salud / clínica", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Camino estratégico a 5 años", tools:["Modelo de 4 ventanas"],
+    obstaculo:"Sin una ruta para posicionarse como referente en alta complejidad.",
+    transformacion:"Plan a cinco años sobre cuatro ventanas con foco en certificaciones de procesos y calidad para pacientes y médicos.",
+    cifra:null },
+
+  // ---- Industria / cultura / equipo ----
+  { cliente:"ADELCA", industria:"Siderúrgica / acero", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Trabajo en equipo y planes de acción (planta, laminados, fundidora)", tools:["Taller de trabajo en equipo","Planes de acción"],
+    obstaculo:"Las áreas operativas no tenían rutinas de colaboración ni un método para su plan de acción.",
+    transformacion:"Taller de trabajo en equipo y, luego, sesiones donde laminados y fundidora crearon y afinaron sus planes de acción alineados a la estrategia.",
+    cifra:null },
+  { cliente:"Laboratorios LIFE", industria:"Farmacéutica", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Embajadores de Cultura · Misión Galileo", tools:["Game-Based Learning","Misiones por pilar"],
+    obstaculo:"Necesitaban un equipo interno capaz de contagiar la cultura, con al menos 95% de recomendación en las sesiones.",
+    transformacion:"Trabajaron los pilares con la primera línea mediante misiones y una experiencia de Game-Based Learning por pilar.",
+    cifra:"98,3% de recomendación de los 22 facilitadores internos, superando la meta del 95%." },
+  { cliente:"Jabonería Wilson", industria:"Consumo masivo (cuidado personal y del hogar)", pais:"Ecuador · Perú · Colombia", frente:"Cambio de cultura",
+    programa:"Medición de clima", tools:["Medición digital de clima","Evento presencial"],
+    obstaculo:"No había una lectura comparable del compromiso de los colaboradores en los tres países.",
+    transformacion:"Medición digital de clima en los tres países con evento presencial en Ecuador; mejoraron los indicadores en los tres, con fortalezas en liderazgo y comunicación.",
+    cifra:null },
+  { cliente:"Toyota Ecuador", industria:"Automotriz", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Taller de trabajo en equipo", tools:["Sesiones en grupos pequeños","Comportamientos clave"],
+    obstaculo:"Los equipos operaban en el statu quo, sin proyectarse al futuro.",
+    transformacion:"Unos 100 colaboradores en cuatro sesiones trabajando cómo motivar al equipo, celebrar los logros de otros y el foco en objetivos colectivos.",
+    cifra:null },
+  { cliente:"NOVA", industria:"Grupo asegurador", pais:"Ecuador", frente:"Cambio de cultura",
+    programa:"Team Building de Recursos Humanos", tools:["Código de honor","Alineación de propósito"],
+    obstaculo:"El área de RR.HH. entraba en transición con una nueva gerente y sin propósito de equipo definido.",
+    transformacion:"Team Building para definir el código de honor y los principios que guiarían el desarrollo del área.",
+    cifra:null },
+  { cliente:"Otis Chile", industria:"Mantenimiento de ascensores", pais:"Chile", frente:"Servicio",
+    programa:"Escuela de servicio al cliente externo", tools:["Escuela de servicio","Team building"],
+    obstaculo:"Técnicos y comerciales que tratan a diario con el cliente no tenían habilidades de servicio homogéneas.",
+    transformacion:"Escuela de servicio para unas 50 personas de comercial, técnico y administrativo, más team building entre comercial y back office.",
+    cifra:null },
+  { cliente:"Copeval", industria:"Distribución de insumos agrícolas", pais:"Chile", frente:"Liderazgo",
+    programa:"Liderazgo Femenino PERLA · Mujer Copeval", tools:["Modelo PERLA","4 módulos / 16 horas"],
+    obstaculo:"El liderazgo femenino no tenía un espacio de desarrollo propio en la organización.",
+    transformacion:"Programa virtual de cuatro módulos (16 horas) para unas 30 mujeres, con el mensaje 'somos capaces' y foco en liderazgo personal y empresarial.",
+    cifra:null },
+
+  // ---- Estrategia (varios) ----
+  { cliente:"Rent", industria:"Renting / arrendamiento vehicular", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Camino estratégico a 5 años", tools:["Modelo de 4 ventanas","Visión quinquenal"],
+    obstaculo:"No tenían una visión de largo plazo para llegar a ser 'top of mind' en renting.",
+    transformacion:"Diseñaron un camino a cinco años sobre cuatro ventanas (financiera, futuro, negocios, clientes) para posicionarse como líder del mercado.",
+    cifra:null },
+  { cliente:"Diario La Hora", industria:"Medios / prensa", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Camino estratégico a 5 años", tools:["Modelo de 4 ventanas"],
+    obstaculo:"Sin una ruta para generar valor a lectores y sociedad frente al cambio del sector.",
+    transformacion:"Plan a cinco años para construir comunidades de valor útiles para la ciudadanía a través de información relevante.",
+    cifra:null },
+  { cliente:"Aglomerados Cotopaxi", industria:"Forestal / tableros de madera", pais:"Ecuador", frente:"Planificación estratégica",
+    programa:"Camino estratégico a 5 años", tools:["Modelo de 4 ventanas","Análisis de capacidad"],
+    obstaculo:"Crecimiento sin un plan de capacidad que lo sostuviera.",
+    transformacion:"Plan a cinco años para consolidar posición en mercado nacional e internacional con una nueva planta y más capacidad forestal.",
+    cifra:null },
+
+  // ---- Accountability / embotelladoras · QSR ----
+  { cliente:"Arca Continental Sudamérica", industria:"Embotelladora / bebidas", pais:"Ecuador · Perú · Argentina", frente:"Accountability",
+    programa:"Estrategia y cultura de ejecución", tools:["Alineación estratégica trimestral","Días de campo","Artefactos ancla"],
+    obstaculo:"Las adquisiciones (Ecuador Bottling Company, Tony, Inalecsa, Corporación Lindley, Salta y Tucumana de Refrescos) traían culturas locales dispares.",
+    transformacion:"Evento trimestral para alinear a las cabezas y una transformación cultural en las adquisiciones, con la premisa de que la cultura no se negocia y se instala a través de artefactos ancla y gerentes de territorio, no de escritorio.",
+    cifra:null },
+  { cliente:"Arcos Dorados México", industria:"Restaurantes / QSR (franquicia McDonald's)", pais:"México", frente:"Accountability",
+    programa:"Dinámica del equipo gerencial · SINDEX nivel 5", tools:["SINDEX nivel 5","Feedback constante","Preparación salvaje"],
+    obstaculo:"El equipo gerencial no tenía una dinámica de alto rendimiento.",
+    transformacion:"Llevaron al equipo gerencial a SINDEX nivel 5 (feedback constante, preparación salvaje, ambición de campeón) y los resultados del equipo impulsaron el ascenso de su líder a CEO de Arcos Dorados México.",
+    cifra:null }
+];
+
+/* ============================================================
+   ESTRUCTURA DEL MARCO
+   ============================================================ */
+const FRAMEWORK = [
+  { key:"personaje", n:"01", label:"Personaje",
+    def:"Un cliente real de Grupo Macro en la misma industria y negocio, y un actor con el que tu cliente se relacione (mismo rol o su rol espejo)." },
+  { key:"objetivo", n:"02", label:"Objetivo",
+    def:"Qué solución quieres demostrar y en qué quieres ganar credibilidad con tu cliente." },
+  { key:"obstaculo", n:"03", label:"Obstáculo",
+    def:"La situación anterior a la solución, donde el personaje tenía el mismo problema que tu cliente — con el indicador en su punto de partida." },
+  { key:"transformacion", n:"04", label:"Transformación",
+    def:"Cómo se aplicó el producto de Grupo Macro y cómo se movió el indicador, de su punto de partida a su punto de llegada." }
+];
+
+/* ============================================================
+   ESTADO / DOM
+   ============================================================ */
+/* =====================================================================
+   CONFIG — pega aquí la URL /exec del Web App de Google Apps Script.
+   Déjala como "" para que la herramienta funcione solo con plantillas.
+   ===================================================================== */
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbyR_EP-E1AU1-GTJmpjr0_jAOiIQRw29dlaiRulTn-KzUc7HBsD93UikjCVqq0oWXcC/exec";
+
+const $ = (id) => document.getElementById(id);
+const stageBody = $("stageBody");
+const buildBtn = $("buildBtn");
+let currentBrief = null;
+let inFlight = null;
+let templState = null;
+
+const EXAMPLE = {
+  industria: "aseguradora de personas",
+  cargo: "gerente comercial",
+  objetivo: "demostrar que la sistemática comercial con el app de Feedback sí cambia el comportamiento de la fuerza de ventas, no solo los reportes",
+  situacion: "sus supervisores persiguen a los vendedores con números y tableros, pero no salen a campo a acompañar la venta",
+  indicador: "% de vendedores que llegan a la meta"
+};
+
+/* ---------- init ---------- */
+(function init() {
+  $("industria").value = EXAMPLE.industria;
+  $("cargo").value = EXAMPLE.cargo;
+  $("objetivo").value = EXAMPLE.objetivo;
+  $("situacion").value = EXAMPLE.situacion;
+  $("indicador").value = EXAMPLE.indicador;
+  renderPlaceholder(true);
+  wireChips();
+  wireTheme();
+
+  buildBtn.addEventListener("click", onBuild);
+  $("clearBtn").addEventListener("click", () => {
+    ["industria", "cargo", "objetivo", "situacion", "indicador"].forEach((k) => ($(k).value = ""));
+    renderPlaceholder(false);
+    $("industria").focus();
+  });
+})();
+
+function wireChips() {
+  document.querySelectorAll(".chips").forEach((group) => {
+    const target = $(group.dataset.target);
+    group.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      target.value = b.textContent.trim();
+      target.focus();
+    });
+  });
+}
+
+function wireTheme() {
+  const btn = $("themeToggle");
+  const root = document.documentElement;
+  btn.addEventListener("click", () => {
+    const now = root.getAttribute("data-theme");
+    let next;
+    if (now === "dark") next = "light";
+    else if (now === "light") next = "dark";
+    else next = matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("he-theme", next); } catch (_) {}
+  });
+  try {
+    const saved = localStorage.getItem("he-theme");
+    if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
+  } catch (_) {}
+}
+
+/* ---------- placeholder / framework preview ---------- */
+function renderPlaceholder(isExample) {
+  const note = isExample
+    ? `<p class="framework-note">Vista previa con un ejemplo cargado. Ajusta el brief y pulsa <b>Construir historia</b>.</p>`
+    : `<p class="framework-note">Completa el brief y pulsa <b>Construir historia</b>. Así se estructura el resultado:</p>`;
+
+  const slots = FRAMEWORK.map((f) => `
+    <article class="movement placeholder-slot${f.key === "obstaculo" ? " is-obstacle" : ""}${f.key === "transformacion" ? " is-transform" : ""}">
+      <div class="eyebrow"><b>${f.n}</b> · ${f.label.toUpperCase()}</div>
+      <h3>${f.label}</h3>
+      <p>${f.def}</p>
+    </article>`).join("");
+
+  stageBody.innerHTML = note + `<div class="movements">${slots}</div>`;
+}
+
+/* ---------- build ---------- */
+function readBrief() {
+  return {
+    industria: $("industria").value.trim(),
+    cargo: $("cargo").value.trim(),
+    objetivo: $("objetivo").value.trim(),
+    situacion: $("situacion").value.trim(),
+    indicador: $("indicador").value.trim()
+  };
+}
+
+async function onBuild() {
+  const brief = readBrief();
+  const missing = Object.entries(brief).filter(([, v]) => !v).map(([k]) => k);
+  if (missing.length) {
+    toast("Completa todos los campos del brief");
+    const first = $(missing[0]);
+    if (first) first.focus();
+    return;
+  }
+  currentBrief = brief;
+
+  if (!BACKEND_URL) {
+    renderFallback(brief);
+    return;
+  }
+  await generate(brief, { regenerate: false });
+}
+
+function setBusy(b) {
+  buildBtn.disabled = b;
+  buildBtn.textContent = b ? "Construyendo…" : "Construir historia";
+}
+
+async function generate(brief, { regenerate }) {
+  setBusy(true);
+  stageBody.innerHTML = `
+    <div class="thinking"><span class="dot"></span> Buscando el caso real más parecido y redactando la historia…</div>`;
+
+  const prompt = buildPrompt(brief, regenerate);
+  const ctl = new AbortController();
+  inFlight = ctl;
+
+  try {
+    const data = await fetchStory(prompt, ctl.signal);
+    if (ctl !== inFlight) return;
+    renderStory(data, brief);
+  } catch (e) {
+    if (ctl !== inFlight) return;
+    if (e && e.name === "AbortError") return;
+    toast("Sin IA por ahora — te muestro un borrador con plantillas");
+    renderFallback(brief);
+  } finally {
+    if (ctl === inFlight) inFlight = null;
+    setBusy(false);
+  }
+}
+
+async function fetchStory(prompt, signal) {
+  const res = await fetch(BACKEND_URL, {
+    method: "POST",
+    signal: signal,
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ prompt: prompt })
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const raw = await res.json();
+  if (raw && raw.error) throw new Error(raw.error);
+  return extractJson(raw && raw.text);
+}
+
+function extractJson(text) {
+  if (!text) throw new Error("respuesta vacía");
+  const s = String(text);
+  const tryParse = (x) => { try { return JSON.parse(x); } catch (_) { return null; } };
+  let v = tryParse(s.trim());
+  if (v) return v;
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence && (v = tryParse(fence[1].trim()))) return v;
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if (a >= 0 && b > a && (v = tryParse(s.slice(a, b + 1)))) return v;
+  throw new Error("JSON inválido");
+}
+
+function buildPrompt(brief, regenerate) {
+  const compact = CASES.map((c) => ({
+    cliente: c.cliente, industria: c.industria, pais: c.pais, frente: c.frente,
+    programa: c.programa, herramientas: c.tools,
+    obstaculo: c.obstaculo, transformacion: c.transformacion,
+    cifra: c.cifra || null
+  }));
+
+  return [
+    "Eres estratega de narrativas comerciales de Grupo Macro, consultora latinoamericana de disciplina comercial, cultura de servicio, liderazgo, cambio de cultura, planificación estratégica y accountability.",
+    "Construyes una \"historia de éxito\" para que un vendedor de Grupo Macro gane credibilidad frente a un cliente potencial. Usa SOLO casos reales de la base entregada.",
+    "",
+    "BASE DE CASOS REALES (JSON):",
+    JSON.stringify(compact),
+    "",
+    "BRIEF DEL CLIENTE POTENCIAL:",
+    "- Tipo de empresa / industria: " + brief.industria,
+    "- Cargo de la persona con quien se conversa: " + brief.cargo,
+    "- Objetivo de la historia (solución a demostrar / dónde ganar credibilidad): " + brief.objetivo,
+    "- Situación actual que quiere mostrar: " + brief.situacion,
+    "- Indicador que el cliente quiere ver moverse: " + brief.indicador,
+    "",
+    "SELECCIÓN DEL CASO — respeta este orden de prioridad, no lo rompas:",
+    "A. MISMA SOLUCIÓN (lo más importante). Clasifica el objetivo en UNA familia y elige un caso cuyo \"frente\"/\"programa\" sea de esa misma familia:",
+    "   - disciplina comercial / sistemática comercial: rutinas comerciales (reunión grito/pito), tableros, acompañamiento en campo, field coaching, prospección, cierre, certificación de ventas, Feedback comercial.",
+    "   - servicio / experiencia: promesa de servicio, protocolos de atención, mystery shopper / cliente fantasma, manejo de reclamos, ticket promedio, monitoreo de servicio.",
+    "   - liderazgo: líder como coach, supervisor como coach, liderazgo femenino, comunicación de líderes.",
+    "   - cambio de cultura: diagnóstico y diseño de cultura, embajadores de cultura, clima laboral, gestión del cambio, team building.",
+    "   - planificación estratégica: camino a 5 años, modelo de 4 ventanas, brown paper / procesos.",
+    "   - accountability: estrategia y cultura de ejecución, SINDEX nivel 5.",
+    "   Si NINGÚN caso de la base es de esa familia, dilo claramente en \"nota_verificacion\", marca \"solucion_coincide\": false y elige el más cercano. NUNCA cambies de familia sin avisar.",
+    "B. MISMA INDUSTRIA o una adyacente.",
+    "C. MISMO INDICADOR. El caso debe girar alrededor del indicador que el cliente quiere mover (revisa \"obstaculo\", \"transformacion\", \"cifra\") o de uno equivalente. Ese indicador es el eje de la historia.",
+    "D. ACTOR con un rol comparable al cargo indicado.",
+    (regenerate ? "Esta es una versión alternativa: elige un caso DISTINTO al más obvio (respetando A) o una lectura diferente del mismo." : ""),
+    "",
+    "REDACCIÓN. Escribe la historia con EXACTAMENTE estas cuatro partes, en español, tono profesional y concreto, 2 a 4 frases cada una:",
+    "- personaje: nombra al cliente real de la base y presenta un actor con el que el cargo indicado se relacione (su mismo rol o su rol espejo). Dale un nombre de pila realista; es un personaje representativo del rol, NO afirmes que sea una persona identificable.",
+    "- objetivo: qué solución o rutina de Grupo Macro se demuestra y en qué se gana credibilidad, en línea con el objetivo del brief.",
+    "- obstaculo: la situación previa a la solución en ese caso, equivalente al problema del cliente. Nombra el indicador en su punto de partida (valor bajo, sin medición, o una descripción concreta si el caso no da número).",
+    "- transformacion: cómo se aplicó el producto/rutina de Grupo Macro y cómo se movió ESE indicador hasta su punto de llegada. Usa SOLO cifras presentes en \"cifra\" o \"transformacion\" del caso elegido; si no hay número, describe el avance de forma concreta pero cualitativa y NO inventes cifras.",
+    "No inventes clientes, programas ni resultados que no estén en la base.",
+    "",
+    "Responde ÚNICAMENTE con un objeto JSON con esta forma exacta:",
+    '{"personaje": string, "objetivo": string, "obstaculo": string, "transformacion": string, "indicador": string, "caso_fuente": {"cliente": string, "programa": string, "industria": string, "pais": string}, "solucion_coincide": boolean, "cifra_en_fuente": boolean, "nota_verificacion": string}',
+    "Donde \"indicador\" resume en una frase el indicador que la historia mueve, con su punto de partida y de llegada; \"solucion_coincide\" es true solo si el caso elegido es de la misma familia de solución que el objetivo; \"cifra_en_fuente\" es true solo si la cifra citada está textualmente en el caso."
+  ].join("\n");
+}
+
+/* ---------- render story ---------- */
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}
+
+function renderStory(data, brief) {
+  const parts = {
+    personaje: data.personaje || "",
+    objetivo: data.objetivo || "",
+    obstaculo: data.obstaculo || "",
+    transformacion: data.transformacion || ""
+  };
+  const src = data.caso_fuente || {};
+  const cifraFlag = data.cifra_en_fuente === true;
+  const indicador = (data.indicador || "").trim();
+  const mismatch = data.solucion_coincide === false;
+  const templated = data._templated === true;
+
+  const movements = FRAMEWORK.map((f) => {
+    const cls = f.key === "obstaculo" ? " is-obstacle" : f.key === "transformacion" ? " is-transform" : "";
+    let extra = "";
+    if (f.key === "transformacion") {
+      if (indicador) {
+        extra = `<p class="payoff">El indicador que se movió — ${esc(indicador)}</p>`;
+      } else if (!cifraFlag) {
+        extra = `<p class="payoff">La mejora en este caso está documentada de forma cualitativa: no hay una cifra publicada en la fuente.</p>`;
+      }
+    }
+    return `
+      <article class="movement${cls}">
+        <div class="eyebrow"><b>${f.n}</b> · ${f.label.toUpperCase()}</div>
+        <h3>${f.label}</h3>
+        <p>${esc(parts[f.key])}</p>
+        ${extra}
+      </article>`;
+  }).join("");
+
+  const sourceCard = `
+    <div class="source-card">
+      <div class="row"><span>Caso fuente</span><span>${esc(src.cliente || "—")}</span></div>
+      <div class="row"><span>Programa</span><span>${esc(src.programa || "—")}</span></div>
+      <div class="row"><span>Industria</span><span>${esc(src.industria || "—")}</span></div>
+      <div class="row"><span>País</span><span>${esc(src.pais || "—")}</span></div>
+      ${indicador ? `<div class="row"><span>Indicador</span><span>${esc(indicador)}</span></div>` : ""}
+      <div class="verify">${esc(data.nota_verificacion || "Verifica nombres de cliente y cifras contra el reporte o el banco de historias antes de usar esta historia con un cliente.")}</div>
+    </div>`;
+
+  const mismatchBanner = mismatch
+    ? `<div class="banner warn">El caso más cercano de la base no es exactamente de la solución que pediste. Revísalo o pulsa <b>Generar otra versión</b>.</div>`
+    : "";
+
+  const templBanner = templated
+    ? `<div class="banner info">La herramienta arma la historia a partir del caso real de Grupo Macro más parecido a tu brief. Es un borrador para ajustar: revisa la redacción y verifica las cifras contra la fuente antes de usarlo con un cliente.</div>`
+    : "";
+
+  const others = templated ? renderOthersDetails() : "";
+
+  const actions =
+    `<button class="btn btn-primary" id="copyBtn" type="button">Copiar historia</button>
+     <button class="btn btn-ghost" id="regenBtn" type="button">Generar otra versión</button>
+     <button class="btn btn-ghost" id="editBtn" type="button">Editar brief</button>`;
+
+  stageBody.innerHTML =
+    templBanner +
+    mismatchBanner +
+    `<p class="framework-note">Historia para <b>${esc(brief.cargo)}</b> de <b>${esc(brief.industria)}</b> · indicador: <b>${esc(brief.indicador)}</b>.</p>` +
+    `<div class="movements">${movements}</div>` +
+    sourceCard +
+    others +
+    `<div class="stage-actions">${actions}</div>`;
+
+  $("copyBtn").addEventListener("click", () => copyStory(parts, src, indicador));
+  $("editBtn").addEventListener("click", () => {
+    $("industria").scrollIntoView({ behavior: "smooth", block: "center" });
+    $("industria").focus();
+  });
+  if (templated) {
+    $("regenBtn").addEventListener("click", rotateTemplated);
+  } else {
+    $("regenBtn").addEventListener("click", () => generate(currentBrief, { regenerate: true }));
+  }
+}
+
+function copyStory(parts, src, indicador) {
+  const txt = [
+    "HISTORIA DE ÉXITO — GRUPO MACRO", "",
+    "PERSONAJE", parts.personaje, "",
+    "OBJETIVO", parts.objetivo, "",
+    "OBSTÁCULO", parts.obstaculo, "",
+    "TRANSFORMACIÓN", parts.transformacion, ""
+  ];
+  if (indicador) txt.push("INDICADOR QUE SE MOVIÓ", indicador, "");
+  txt.push("— Caso fuente: " + (src.cliente || "—") + " · " + (src.programa || "—") + " (" + (src.pais || "—") + ")");
+  navigator.clipboard.writeText(txt.join("\n")).then(
+    () => toast("Historia copiada"),
+    () => toast("No se pudo copiar")
+  );
+}
+
+/* ---------- armado de la historia con plantillas (sin IA) ---------- */
+function renderFallback(brief) {
+  const ranked = rankCases(brief);
+  if (!ranked.length) { renderPlaceholder(false); return; }
+  templState = { brief, ranked, rank: 0, variant: 0 };
+  renderStory(assembleStory(brief, ranked[0], 0), brief);
+}
+
+function rotateTemplated() {
+  if (!templState) return;
+  const { ranked, brief } = templState;
+  const span = Math.min(4, ranked.length);
+  templState.rank = (templState.rank + 1) % span;
+  if (templState.rank === 0) templState.variant = (templState.variant + 1) % ACTOR_NAMES.length;
+  renderStory(assembleStory(brief, ranked[templState.rank], templState.variant), brief);
+}
+
+function renderOthersDetails() {
+  if (!templState) return "";
+  const { ranked, rank } = templState;
+  const rest = ranked.filter((_, i) => i !== rank).slice(0, 3);
+  if (!rest.length) return "";
+  const items = rest.map((c) => `
+    <li><b>${esc(c.cliente)}</b> — ${esc(c.industria)} · ${esc(c.frente)}<br />
+      <span class="o-sub">${esc(c.programa)}${c.cifra ? " — " + esc(c.cifra) : ""}</span></li>`).join("");
+  return `<details class="others"><summary>Otros casos que calzan con el brief</summary><ul>${items}</ul></details>`;
+}
+
+const ACTOR_NAMES = ["Verónica", "Andrés", "Carla", "Mauricio", "Paola", "Diego", "Lucía", "Fernando", "Gabriela", "Ricardo", "Daniela", "Sebastián", "Mónica", "Julio"];
+
+function pickName(seed, offset) {
+  const s = String(seed || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return ACTOR_NAMES[(h + (offset || 0)) % ACTOR_NAMES.length];
+}
+
+function lcFirst(s) {
+  s = (s || "").trim();
+  return s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+}
+function dot(s) {
+  s = (s || "").trim();
+  if (!s) return "";
+  return /[.!?…]$/.test(s) ? s : s + ".";
+}
+function cleanCargo(cargo) {
+  return (cargo || "responsable del área").replace(/^(el|la|un|una)\s+/i, "").trim();
+}
+function trimObjetivo(s) {
+  let t = (s || "").trim();
+  t = t.replace(/^(demostrar|mostrar|probar|evidenciar|lograr)\s+(que\s+)?/i, "");
+  t = t.replace(/^que\s+(vea|vean|note|noten|entienda|entiendan|crea|crean)\s+(que\s+)?/i, "");
+  t = t.replace(/^que\s+/i, "");
+  return t.trim() || (s || "").trim();
+}
+
+function assembleStory(brief, c, variant) {
+  const name = pickName(c.cliente + "|" + c.programa, variant || 0);
+  const cargo = cleanCargo(brief.cargo);
+  const obj = trimObjetivo(brief.objetivo);
+  const ind = (brief.indicador || "el indicador clave").trim();
+  const hasCifra = !!c.cifra;
+  const frenteParen = c.frente ? ` (${lcFirst(c.frente)})` : "";
+
+  const personaje =
+    `${name}, ${cargo} de ${c.cliente} (${c.industria}, ${c.pais}), está en el mismo lugar que tu cliente: el mismo rol, el mismo tipo de negocio y la misma presión por resultados.`;
+
+  const objetivo =
+    `Demostrar que ${lcFirst(obj)}. ${c.cliente} ya lo hizo tangible con ${c.programa}${frenteParen}, y ${name} lo vivió de primera mano.`;
+
+  const obstaculo =
+    `Antes de esa solución, ${c.cliente} cargaba lo mismo que tu cliente hoy. ${dot(c.obstaculo)} En tu caso se ve así: ${dot(brief.situacion)} Con ${ind} sin moverse.`;
+
+  let transformacion = `${c.cliente} puso en marcha ${c.programa}: ${dot(c.transformacion)}`;
+  transformacion += hasCifra
+    ? ` En números: ${dot(c.cifra)}`
+    : ` La mejora quedó documentada de forma concreta, aunque sin una cifra publicada en la fuente.`;
+  transformacion += ` Ese es el movimiento en ${ind} que tu cliente quiere ver.`;
+
+  const bf = familyOf(brief.objetivo + " " + brief.situacion);
+  const cf = familyOf(c.frente + " " + c.programa + " " + (c.tools || []).join(" "));
+
+  return {
+    personaje, objetivo, obstaculo, transformacion,
+    indicador: hasCifra
+      ? `${ind} — en el caso fuente el avance quedó así: ${c.cifra}`
+      : `${ind} — el caso fuente documenta la mejora de forma concreta pero cualitativa`,
+    caso_fuente: { cliente: c.cliente, programa: c.programa, industria: c.industria, pais: c.pais },
+    solucion_coincide: !(bf && cf && bf !== cf),
+    cifra_en_fuente: hasCifra,
+    nota_verificacion: "Borrador armado automáticamente a partir del caso real más parecido. Ajusta la redacción y verifica el nombre del cliente y las cifras contra el reporte antes de usarlo con un cliente.",
+    _templated: true
+  };
+}
+
+const STOPWORDS = new Set(["de","la","el","los","las","un","una","que","con","por","para","del","al","en","y","o","su","sus","se","no","es","como","mas","más","pero","le","lo"]);
+function tokens(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOPWORDS.has(w));
+}
+function deacc(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+const FAMILIES = {
+  "disciplina comercial": ["sistematica","comercial","comerciales","ventas","venta","vendedor","vendedores","rutina","rutinas","tablero","tableros","prospeccion","cierre","cuota","meta","field","coaching","acompañamiento","certificacion","feedback","grito","pito","fuerza","incubadora","agentes"],
+  "servicio": ["servicio","experiencia","atencion","promesa","protocolo","protocolos","reclamo","reclamos","mystery","shopper","fantasma","ticket","satisfaccion","isc","recomendacion","nps","pasajero","paciente","telefonica","capa"],
+  "liderazgo": ["liderazgo","lider","lideres","coach","supervisor","femenino","perla","cascada"],
+  "cultura": ["cultura","cultural","clima","cambio","embajadores","adkar","team","building","valores","proposito","honor","galileo","competencias","chicharra"],
+  "estrategia": ["estrategia","estrategica","estrategico","planificacion","ventanas","quinquenal","procesos","brown","paper","vision"],
+  "accountability": ["accountability","ejecucion","sindex","okr","desafios"]
+};
+function familyOf(text) {
+  const t = new Set(tokens(text));
+  let best = null, bestScore = 0;
+  for (const fam in FAMILIES) {
+    let s = 0;
+    for (const w of FAMILIES[fam]) if (t.has(w)) s++;
+    if (s > bestScore) { bestScore = s; best = fam; }
+  }
+  return best;
+}
+
+function rankCases(brief) {
+  const briefFam = familyOf(brief.objetivo + " " + brief.situacion);
+  const indTok = new Set(tokens(brief.indicador));
+  const briefToks = new Set([].concat(tokens(brief.industria), tokens(brief.cargo), tokens(brief.objetivo), tokens(brief.situacion)));
+  const bi = deacc(brief.industria);
+  return CASES.map((c) => {
+    const caseFam = familyOf(c.frente + " " + c.programa + " " + (c.tools || []).join(" "));
+    const hay = new Set([].concat(
+      tokens(c.industria), tokens(c.frente), tokens(c.programa), tokens((c.tools || []).join(" ")),
+      tokens(c.obstaculo), tokens(c.transformacion), tokens(c.cifra)
+    ));
+    let score = 0;
+    briefToks.forEach((t) => { if (hay.has(t)) score += 1; });
+    indTok.forEach((t) => { if (hay.has(t)) score += 3; });
+    if (briefFam && caseFam && briefFam === caseFam) score += 8;
+    const ci = deacc(c.industria);
+    if (bi && ci && (ci.includes(bi) || bi.includes(ci.split(" ")[0]))) score += 4;
+    return { c, score };
+  }).sort((a, b) => b.score - a.score).map((x) => x.c);
+}
+
+/* ---------- toast ---------- */
+let toastT = null;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("show"), 1900);
+}
+</script>
+</body>
+</html>
