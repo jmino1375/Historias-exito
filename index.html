@@ -399,6 +399,7 @@
     color: var(--muted);
     max-width: 66ch;
   }
+  footer.foot a { color: var(--accent-ink); font-weight: 600; }
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
@@ -512,9 +513,12 @@
 
   <footer class="foot">
     Las historias se construyen a partir de casos reales documentados por Grupo Macro
-    (reportes anuales y bancos de historias de Servicio, Disciplina Comercial y Accountability).
+    (reportes anuales, bancos de historias de Servicio, Disciplina Comercial y Accountability,
+    y los casos que suben los consultores).
     Los nombres de personas son personajes representativos del rol, no personas identificables.
     Verifica cifras y nombres de cliente contra la fuente citada antes de usar la historia con un cliente.
+    <br /><br />
+    <a href="agregar-historia.html">¿Tienes un caso para compartir? Agrégalo a la base →</a>
   </footer>
 </div>
 
@@ -523,8 +527,10 @@
 <script>
 /* ============================================================
    BASE DE CASOS REALES  (Grupo Macro)
+   Los casos que suben los consultores desde agregar-historia.html
+   se agregan en runtime a este arreglo — ver loadRemoteCases().
    ============================================================ */
-const CASES = [
+let CASES = [
   // ---- Seguros ----
   { cliente:"La Boliviana Ciacruz", industria:"Aseguradora", pais:"Bolivia", frente:"Disciplina comercial",
     programa:"Programa incubadora de agentes", tools:["Reclutamiento","Sistemática comercial","Plan de carrera"],
@@ -837,6 +843,39 @@ const EXAMPLE = {
   indicador: "% de vendedores que llegan a la meta"
 };
 
+/* ---------- casos remotos (agregados por consultores) ---------- */
+let casesReady = Promise.resolve();
+
+function normalizeRemoteCase(c) {
+  return {
+    cliente: c.cliente || "Caso sin nombre",
+    industria: c.industria || "",
+    pais: c.pais || "",
+    cargo: c.cargo || "",
+    frente: c.frente || "",
+    programa: c.programa || "",
+    tools: Array.isArray(c.tools) ? c.tools
+      : String(c.tools || c.herramientas || "").split(",").map((s) => s.trim()).filter(Boolean),
+    descripcion: c.descripcion || "",
+    obstaculo: c.obstaculo || "",
+    transformacion: c.transformacion || "",
+    cifra: c.cifra || null
+  };
+}
+
+function loadRemoteCases() {
+  if (!BACKEND_URL) return Promise.resolve();
+  const sep = BACKEND_URL.includes("?") ? "&" : "?";
+  return fetch(BACKEND_URL + sep + "action=cases")
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data && Array.isArray(data.cases) && data.cases.length) {
+        CASES = CASES.concat(data.cases.map(normalizeRemoteCase));
+      }
+    })
+    .catch(() => {});
+}
+
 /* ---------- init ---------- */
 (function init() {
   $("industria").value = EXAMPLE.industria;
@@ -847,6 +886,7 @@ const EXAMPLE = {
   renderPlaceholder(true);
   wireChips();
   wireTheme();
+  casesReady = loadRemoteCases();
 
   buildBtn.addEventListener("click", onBuild);
   $("clearBtn").addEventListener("click", () => {
@@ -924,6 +964,8 @@ async function onBuild() {
   }
   currentBrief = brief;
 
+  await Promise.race([casesReady, new Promise((r) => setTimeout(r, 3000))]);
+
   if (!BACKEND_URL) {
     renderFallback(brief);
     return;
@@ -989,7 +1031,8 @@ function extractJson(text) {
 function buildPrompt(brief, regenerate) {
   const compact = CASES.map((c) => ({
     cliente: c.cliente, industria: c.industria, pais: c.pais, frente: c.frente,
-    programa: c.programa, herramientas: c.tools,
+    programa: c.programa, herramientas: c.tools, cargo: c.cargo || null,
+    descripcion: c.descripcion || null,
     obstaculo: c.obstaculo, transformacion: c.transformacion,
     cifra: c.cifra || null
   }));
@@ -1023,7 +1066,7 @@ function buildPrompt(brief, regenerate) {
     (regenerate ? "Esta es una versión alternativa: elige un caso DISTINTO al más obvio (respetando A) o una lectura diferente del mismo." : ""),
     "",
     "REDACCIÓN. Escribe la historia con EXACTAMENTE estas cuatro partes, en español, tono profesional y concreto, 2 a 4 frases cada una:",
-    "- personaje: nombra al cliente real de la base y presenta un actor con el que el cargo indicado se relacione (su mismo rol o su rol espejo). Dale un nombre de pila realista; es un personaje representativo del rol, NO afirmes que sea una persona identificable.",
+    "- personaje: nombra al cliente real de la base y presenta un actor con el que el cargo indicado se relacione (su mismo rol o su rol espejo). Si el caso trae \"cargo\", usa ESE cargo real para el actor (no lo cambies); si no lo trae, invéntale uno comparable al cargo del brief. Dale un nombre de pila realista; es un personaje representativo del rol, NO afirmes que sea una persona identificable.",
     "- objetivo: qué solución o rutina de Grupo Macro se demuestra y en qué se gana credibilidad, en línea con el objetivo del brief.",
     "- obstaculo: la situación previa a la solución en ese caso, equivalente al problema del cliente. Nombra el indicador en su punto de partida (valor bajo, sin medición, o una descripción concreta si el caso no da número).",
     "- transformacion: cómo se aplicó el producto/rutina de Grupo Macro y cómo se movió ESE indicador hasta su punto de llegada. Usa SOLO cifras presentes en \"cifra\" o \"transformacion\" del caso elegido; si no hay número, describe el avance de forma concreta pero cualitativa y NO inventes cifras.",
@@ -1194,13 +1237,15 @@ function trimObjetivo(s) {
 function assembleStory(brief, c, variant) {
   const name = pickName(c.cliente + "|" + c.programa, variant || 0);
   const cargo = cleanCargo(brief.cargo);
+  const casoCargo = c.cargo ? cleanCargo(c.cargo) : cargo;
   const obj = trimObjetivo(brief.objetivo);
   const ind = (brief.indicador || "el indicador clave").trim();
   const hasCifra = !!c.cifra;
   const frenteParen = c.frente ? ` (${lcFirst(c.frente)})` : "";
 
-  const personaje =
-    `${name}, ${cargo} de ${c.cliente} (${c.industria}, ${c.pais}), está en el mismo lugar que tu cliente: el mismo rol, el mismo tipo de negocio y la misma presión por resultados.`;
+  const personaje = casoCargo.toLowerCase() === cargo.toLowerCase()
+    ? `${name}, ${casoCargo} de ${c.cliente} (${c.industria}, ${c.pais}), está en el mismo lugar que tu cliente: el mismo rol, el mismo tipo de negocio y la misma presión por resultados.`
+    : `${name}, ${casoCargo} de ${c.cliente} (${c.industria}, ${c.pais}), vivió el mismo reto que enfrenta hoy tu cliente como ${cargo}: el mismo tipo de negocio y la misma presión por resultados.`;
 
   const objetivo =
     `Demostrar que ${lcFirst(obj)}. ${c.cliente} ya lo hizo tangible con ${c.programa}${frenteParen}, y ${name} lo vivió de primera mano.`;
