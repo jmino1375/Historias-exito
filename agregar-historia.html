@@ -782,6 +782,18 @@ function blobToBase64(blob) {
   });
 }
 
+const AUDIO_EXT_MIME = {
+  ogg: "audio/ogg", oga: "audio/ogg", opus: "audio/ogg",
+  mp3: "audio/mpeg", m4a: "audio/mp4", mp4: "audio/mp4",
+  wav: "audio/wav", aac: "audio/aac", flac: "audio/flac",
+  webm: "audio/webm", amr: "audio/amr", "3gp": "audio/3gpp", aiff: "audio/aiff"
+};
+function guessAudioMimeType(file) {
+  if (file.type) return file.type;
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  return AUDIO_EXT_MIME[ext] || "audio/mpeg";
+}
+
 $("audioFile").addEventListener("change", async () => {
   const file = $("audioFile").files[0];
   if (!file) return;
@@ -792,7 +804,7 @@ $("audioFile").addEventListener("change", async () => {
   $("fileStatus").textContent = "Transcribiendo…";
   try {
     const b64 = await blobToBase64(file);
-    const data = await backendPost({ action: "transcribe", audio: b64, mimeType: file.type || "audio/mpeg" });
+    const data = await backendPost({ action: "transcribe", audio: b64, mimeType: guessAudioMimeType(file) });
     const ta = $("narracion");
     ta.value = (ta.value ? ta.value.trim() + " " : "") + (data.text || "").trim();
     $("fileStatus").textContent = "Transcripción agregada al relato.";
